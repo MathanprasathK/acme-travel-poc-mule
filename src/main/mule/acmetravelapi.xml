@@ -1,0 +1,463 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+    <http:listener-config name="acmetravelapi-httpListenerConfig" basePath="${http.basepath}">
+        <http:listener-connection host="${http.host}" port="${http.port}" />
+    </http:listener-config>
+    <apikit:config name="acmetravelapi-config" api="acmetravelapi.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <db:config name="Database_Config_MySQL" doc:name="Database Config" doc:id="d79bff9b-00af-4d25-9e2d-4d4a7ac5e64d" >
+		<db:my-sql-connection host="${mySQL.host}" port="${mySQL.port}" user="${credentials.username}" password="${credentials.password}" database="${mySQL.dbname}" />
+	</db:config>
+	<configuration-properties doc:name="Configuration properties" doc:id="6a0e59a8-f978-47f4-85ea-5452e1533c9d" file="config\sandbox-configuration.yaml" />
+	<flow name="acmetravelapi-main">
+        <http:listener config-ref="acmetravelapi-httpListenerConfig" path="/v1.0/*" doc:name="HTTP Listener">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="acmetravelapi-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+	<flow name="acmetravelapi-console">
+        <http:listener config-ref="acmetravelapi-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="acmetravelapi-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="patch:\flights\(flightCode)\prices">
+        <logger level="INFO" doc:name="Log Incoming Request Entry" doc:id="069e65f7-e57e-434b-b0fb-2ec716cceed1" message="#['HTTP Request received for ' 
+ ++ (attributes.method) ++ ': ' ++ (attributes.requestPath)]"/>
+		<set-variable value="#[payload.Price as Number]" doc:name="Set Price" doc:id="59b2f587-2094-434b-a8db-9f946471b2b5" variableName="price" />
+		<set-variable value="#[attributes.uriParams.flightCode]" doc:name="Set FlightCode" doc:id="fd8c2f72-2dfd-4d17-a7d6-4cd28564261c" variableName="flightCode" />
+		<choice doc:name="Update Ticket Price" doc:id="d0ee637a-54ec-46e8-aec7-c3bb2c314227" >
+			<when expression="#[payload.PriceNature == 'Increase']">
+				
+				<try doc:name="Try" doc:id="119aff25-6f73-4a36-8483-d3d615bef562" >
+					<db:update doc:name="Increase Ticket Price" doc:id="c13690df-c290-4cdf-847e-0557c5792bb2" config-ref="Database_Config_MySQL">
+					<db:sql>UPDATE flights_Mathan
+SET Price = Price + :price
+WHERE Flight_Code = :flightCode</db:sql>
+					<db:input-parameters><![CDATA[#[{
+	price:vars.price,
+	flightCode:vars.flightCode
+}]]]></db:input-parameters>
+				</db:update>
+					<error-handler >
+						<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="11e0a612-dcfb-4e6b-a80d-9b78ffd2fa71" >
+							<logger level="INFO" doc:name="Logger" doc:id="69a8cdfc-01c4-45f5-a871-b9e5c3753d4d" message="#['DB Error occurred ' ++ error.description]"/>
+							<ee:transform doc:name="Transform Message" doc:id="148215ca-874b-4a22-809a-d188b908a7a2" >
+								<ee:message >
+									<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+						</on-error-propagate>
+					</error-handler>
+				</try>
+				<ee:transform doc:name="Transform Message" doc:id="0b035757-2e97-4beb-bfc3-29ae7aa7ad29" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message:"Updated successfully"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<when expression="#[payload.PriceNature == 'Decrease']">
+				
+				<try doc:name="Try" doc:id="f836c684-0072-4669-bfca-9a749106d897" >
+					<db:update doc:name="Decrease Ticket Price" doc:id="e661e6fe-769e-4c54-bf5f-62d9e0c120e6" config-ref="Database_Config_MySQL">
+					<db:sql>UPDATE flights_Mathan
+SET Price = Price - :price
+WHERE Flight_Code = :flightCode</db:sql>
+					<db:input-parameters><![CDATA[#[{
+	price:vars.price,
+	flightCode:vars.flightCode
+}]]]></db:input-parameters>
+				</db:update>
+					<error-handler >
+						<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="28ba05ec-e9e6-40cb-9146-05af467c1b93" >
+							<logger level="INFO" doc:name="Logger" doc:id="44d560bc-3404-4e4a-9188-39ef9d5c4454" message="#['DB Error occurred ' ++ error.description]"/>
+							<ee:transform doc:name="Transform Message" doc:id="803a3e20-2766-4d54-a491-d899a3288373" >
+								<ee:message >
+									<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+						</on-error-propagate>
+					</error-handler>
+				</try>
+				<ee:transform doc:name="Transform Message" doc:id="59c2dcc4-f1bb-486a-a3c0-88091edface9">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message:"Updated successfully"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="86b070dc-4a94-445e-a865-438b55ad6b8a" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "No update"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+    </flow>
+    <flow name="patch:\flights\(flightCode)\seats">
+        <logger level="INFO" doc:name="Log Incoming Request Entry" doc:id="f0382013-5026-4790-ba32-73c469f7c5ed" message="#['HTTP Request received for ' 
+ ++ (attributes.method) ++ ': ' ++ (attributes.requestPath)]"/>
+		<set-variable value="#[payload.TotalNumberOfTickets as Number]" doc:name="Set Number Of Tickets" doc:id="c813be2d-6ab0-4d5e-8d93-af3f59f53c01" variableName="numberOfTickets"/>
+		<set-variable value="#[attributes.uriParams.flightCode]" doc:name="Set Flight Code" doc:id="f7168727-2dba-4d9b-8be4-00a25c2e0eec" variableName="flightCode"/>
+		<choice doc:name="Update Seat Availability" doc:id="50b77cf6-3cd6-4bd7-b384-1349aad4e1a4" >
+			<when expression="#[payload.TicketNature == 'Add']">
+				
+				<try doc:name="Try" doc:id="b06fdcd3-4175-45fa-859d-9148144d8778" >
+					<db:update doc:name="Add Seat Availability" doc:id="03d87957-21ac-4094-a39f-5d89d536f761" config-ref="Database_Config_MySQL">
+					<db:sql>UPDATE flights_Mathan
+SET Seat_Availability = Seat_Availability + :totalNumberOfTickets
+WHERE Flight_Code = :flightCode</db:sql>
+					<db:input-parameters><![CDATA[#[{
+	totalNumberOfTickets:vars.numberOfTickets,
+	flightCode:vars.flightCode
+}]]]></db:input-parameters>
+				</db:update>
+					<error-handler >
+						<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="e337099a-6090-4f7d-b1bb-37d0f00a6db6" type="ANY">
+							<logger level="INFO" doc:name="Log Error for failed DB operation" doc:id="b130e01b-e455-4df8-97c0-1d1043ec040e" message="#['DB Error occurred ' ++ error.description]"/>
+							<ee:transform doc:name="Transform Message" doc:id="f60e09f7-075b-4f94-ad01-6ddd3c933ed0" >
+								<ee:message >
+									<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	error_message: 'DB error',
+	error_description: error.description
+}]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+						</on-error-propagate>
+					</error-handler>
+				</try>
+				<ee:transform doc:name="Transform Message" doc:id="14873bc0-2039-48bb-a8bd-4e6398e3f923" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message:"Updated successfully"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<when expression="#[payload.TicketNature == 'Reduce']">
+				
+				<try doc:name="Try" doc:id="786fab9e-9e7f-4bd1-a641-d65af631e1de" >
+					<db:update doc:name="Reduce SeatAvailability" doc:id="d3322c8e-9941-4d62-94eb-02de34128bf0" config-ref="Database_Config_MySQL">
+					<db:sql>UPDATE flights_Mathan
+SET Seat_Availability = Seat_Availability - :totalNumberOfTickets
+WHERE Flight_Code = :flightCode</db:sql>
+					<db:input-parameters><![CDATA[#[{
+	totalNumberOfTickets:vars.numberOfTickets,
+	flightCode:vars.flightCode
+}]]]></db:input-parameters>
+				</db:update>
+					<error-handler >
+						<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="083049e9-830e-4b4c-af22-e6dfdf004387" type="ANY">
+							<logger level="INFO" doc:name="Log Error for failed DB operation" doc:id="8bc9aa5c-080c-4b15-b183-fc8db0fa3535" message="#['DB Error occurred ' ++ error.description]"/>
+							<ee:transform doc:name="Transform Message" doc:id="3ef25174-88db-4102-a770-2a3eedb2fbb5" >
+								<ee:message >
+									<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	error_message: 'DB error',
+	error_description: error.description
+}]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+						</on-error-propagate>
+					</error-handler>
+				</try>
+				<ee:transform doc:name="Transform Message" doc:id="8382a329-ebb4-4b2a-b5b6-4cfbe86281e1">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message:"Updated successfully"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="3358c88e-4c74-4615-ba92-7fa67fb918c6" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "No update"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+    </flow>
+    <flow name="get:\flights">
+		<logger level="INFO" doc:name="Log Incoming Request Entry" doc:id="ffa88bb9-90ac-488c-ad9a-df71c43b13c1" message="#['HTTP Request received for ' 
+ ++ (attributes.method) ++ ': ' ++ (attributes.requestPath)]"/>
+		<try doc:name="Try" doc:id="9e46c949-3b4a-4b69-84f2-b52bac57f7b0" >
+			<db:select doc:name="Retrieve Available Flights" doc:id="8cdb8b40-8484-4006-971f-937775c09aa3" config-ref="Database_Config_MySQL">
+			<db:sql>SELECT Airline_ID AS Flight_Code, 
+			Name AS Flight_Name
+FROM airlines
+WHERE Name IS NOT NULL AND Active = 'Y'
+ORDER BY Name;</db:sql>
+		</db:select>
+			
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="ffc4bb05-35b0-4efd-86b3-6ef9933df135" >
+					<logger level="ERROR" doc:name="Log Error for failed DB operation" doc:id="f353583d-addf-42c5-a914-3b0f877242ce" message="#['DB Error occurred ' ++ error.description]"/>
+					<ee:transform doc:name="Transform Message" doc:id="5625b843-666c-4c1a-9464-953f1cb175af" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	error_message: 'DB error',
+	error_description: error.description
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<ee:transform doc:name="Transform Message" doc:id="33aeadfa-2c55-43d3-8a75-af89b93d2464">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+    </flow>
+    <flow name="get:\flights\(flightCode)\destinations">
+                <logger level="INFO" doc:name="Log Incoming Request Entry" doc:id="61cdbb34-b73f-4ff0-9a35-ec16c34ac9e5" message="#['HTTP Request received for ' ++ (attributes.method) ++ ':' ++ (attributes.requestPath)]"/>
+		<set-variable value="#[attributes.uriParams.flightCode as Number]" doc:name="Set FlightCode" doc:id="1ad81b70-c334-47af-8b50-6fe8cb7d1b39" variableName="flightCode"/>
+		<set-variable value="#[attributes.queryParams.limit as Number]" doc:name="Set Limit Value" doc:id="648dd2dd-e11f-4bc8-a843-ca3a56be4f78" variableName="limit"/>
+		<set-variable value="#[attributes.queryParams.offset as Number]" doc:name="Set Offset Value" doc:id="777c06c1-57d4-46b9-acfb-2154306b6787" variableName="offset"/>
+		<try doc:name="Try" doc:id="83af5301-01dd-48f5-9925-4574a28575b8" >
+			<db:select doc:name="Retrieve Flight Destinations" doc:id="92af0f39-2485-4d7e-8e4d-d5c0bac5e9be" config-ref="Database_Config_MySQL">
+			<db:sql>#[&quot;SELECT Airline_ID,Country,City,Name AS Airport_Name FROM routes r JOIN airports a ON r.Destination_Airport_ID = a.Airport_ID WHERE r.Airline_ID = :flightCode ORDER BY Name LIMIT $(vars.limit) OFFSET $(vars.offset default 0)&quot;]</db:sql>
+			<db:input-parameters><![CDATA[#[{
+	flightCode:vars.flightCode
+}]]]></db:input-parameters>
+		</db:select>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="8cc50709-9aaf-4f10-894b-b72c03ccadb6" type="ANY">
+					<logger level="INFO" doc:name="Logger" doc:id="d49be2d6-31f0-4e01-be38-ef7b2a249f7f" message="#['DB operation error ' ++ error.description]"/>
+					<ee:transform doc:name="Transform Message" doc:id="7615b98b-2cb0-4e92-b294-ade6d28760f6" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	error_message: 'DB operation failed',
+	error_description: error.description
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<ee:transform doc:name="Transform Message" doc:id="be3889f2-3607-46d2-b067-0c1942ea73ab">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+fun filterDestinationsByFlightCode(object) = (object.Airline_ID == vars.flightCode)
+---
+destinations: payload filter(filterDestinationsByFlightCode($)) distinctBy (object) -> {unique:object}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+    </flow>
+    <flow name="post:\flights">
+        <logger level="INFO" doc:name="Log Incoming Request Entry" doc:id="5d8b4bb1-7aae-4f6d-a5bd-1ff7b456a11a" message="#['HTTP Request received for ' ++ (attributes.method) ++ ':' ++ (attributes.requestPath)]"/>
+		<try doc:name="Try" doc:id="efd5a6f8-fa3f-4296-91f7-8f368f24bac1" >
+			<db:insert doc:name="Add New Flight Entry" doc:id="2a7f7063-a025-408c-a12e-7468ece1ad04" config-ref="Database_Config_MySQL">
+			<db:sql>INSERT INTO flights_Mathan
+VALUES (
+				:flightCode,
+				:airlineName,
+				:departureAirport,
+				:destinationAirport,
+				:departureTime,
+				:aircraftType,
+				:seatAvailability,
+				:price);</db:sql>
+			<db:input-parameters><![CDATA[#[{
+	flightCode: payload.FlightCode,
+	airlineName: payload.AirlineName,
+	departureAirport: payload.DepartureAirport,
+	destinationAirport: payload.DestinationAirport,
+	aircraftType: payload.AircraftType,
+	seatAvailability: payload.SeatAvailability,
+	price: payload.Price,
+	departureTime: payload.DepartureDate
+	
+}]]]></db:input-parameters>
+		</db:insert>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="032fae94-77b7-49b1-9c03-167ba31298fa" type="ANY">
+					<logger level="INFO" doc:name="Log DB Error" doc:id="ae91ea69-7fa5-4419-8bd1-77e86c4ec497" message="#['DB operation error ' ++ error.description]"/>
+					<ee:transform doc:name="Transform Message" doc:id="18d718fd-c702-4d5d-8478-c262c1ea87f8" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	error_message: 'DB operation failed',
+	error_description: error.description
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message:"New Flight added successfully"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+</mule>

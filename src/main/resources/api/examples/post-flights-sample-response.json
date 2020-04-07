@@ -1,0 +1,9 @@
+{
+                "FlightCode": "BA001",
+                "AirlineName": "British Airways",
+                "DepartureAirport": "JFK",
+                "DestinationAirport": "LCY",
+                "AircraftType": "Airbus A318",
+                "SeatAvailability": 50,
+                "Price": 300
+              }

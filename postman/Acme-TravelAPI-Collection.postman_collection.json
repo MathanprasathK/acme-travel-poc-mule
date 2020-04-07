@@ -1,0 +1,273 @@
+{
+	"info": {
+		"_postman_id": "11c363c7-9c96-44e6-bf98-8b75d3e146b1",
+		"name": "Acme-TravelAPI-Collection",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get Flights",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "cda0d605-d04e-4d62-92ae-110e385a08d8",
+						"exec": [
+							"pm.test(\"Response must be a JSON with Status code 200 \", function(){\r",
+							"    pm.response.to.have.status(200);\r",
+							"    pm.response.to.be.json;\r",
+							"    \r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "1af779b5-9445-4121-8db7-6e3e599efbe4",
+						"exec": [
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}/{{basepath}}/flights?date=2020-04-06",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{basepath}}",
+						"flights"
+					],
+					"query": [
+						{
+							"key": "date",
+							"value": "2020-04-06"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Flight Destinations",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "36a103d3-a425-4b85-8fae-ddc54f13a679",
+						"exec": [
+							"pm.test(\"Response must be a JSON with Status code 200\", function(){\r",
+							"    pm.response.to.have.status(200);\r",
+							"    pm.response.to.be.json;\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}/{{basepath}}/flights/328/destinations?limit=100&offset=50",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{basepath}}",
+						"flights",
+						"328",
+						"destinations"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "100",
+							"description": "Limit the number of records retrieved"
+						},
+						{
+							"key": "offset",
+							"value": "50",
+							"description": "Specify the position from where the next retrieval happen"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update Flight Price",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "d2a7a5a2-0037-4b9d-b77b-c4427c90cfa2",
+						"exec": [
+							"pm.test(\"Response must be a JSON with Status code 200\", function(){\r",
+							"    pm.response.to.have.status(200);\r",
+							"    pm.response.to.be.json;\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"Price\":10,\n\t\"PriceNature\":\"Increase\"\n}"
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/{{basepath}}/flights/BA001/prices",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{basepath}}",
+						"flights",
+						"BA001",
+						"prices"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update Seat Availability",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "9f6b93dc-f099-41a1-974d-484cda47469b",
+						"exec": [
+							"pm.test(\"Response must be a JSON with Status code 200\", function(){\r",
+							"    pm.response.to.have.status(200);\r",
+							"    pm.response.to.be.json;\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"TotalNumberOfTickets\": 10,\n\t\"TicketNature\": \"Add\"\n}"
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/{{basepath}}/flights/BA001/seats",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{basepath}}",
+						"flights",
+						"BA001",
+						"seats"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add New Flight",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "6b3d1004-0356-4a20-9035-bca17a0e86f8",
+						"exec": [
+							"pm.test(\"Response must be a JSON with Status code 201\", function(){\r",
+							"    pm.response.to.have.status(201);\r",
+							"    pm.response.to.be.json;\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "5acd3d47-a1da-42a1-91f4-f648590b25c3",
+						"exec": [
+							"//  To generate random number",
+							"function randomNumber(length) {",
+							"    var text = \"\";",
+							"    var possible = \"0123456789\";",
+							"    for(var i = 0; i < length; i++) {",
+							"        text += possible.charAt(Math.floor(Math.random() * possible.length));",
+							"    }",
+							"    return text;",
+							"}",
+							"",
+							"var flightCode = 'AI' + randomNumber(3);",
+							"//Sets the new random FlightCode automaticaly everytime.",
+							"pm.environment.set('flightCode', flightCode);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"FlightCode\": \"{{flightCode}}\",\n\t\"AirlineName\": \"Air India\",\n\t\"DepartureAirport\": \"MAA\",\n\t\"DestinationAirport\": \"LHR\",\n\t\"AircraftType\": \"Boeing DreamLiner\",\n\t\"SeatAvailability\": 300,\n\t\"Price\": 325,\n\t\"DepartureDate\": \"2020-03-16 01:00:00\"\n}"
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/{{basepath}}/flights",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"{{basepath}}",
+						"flights"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}

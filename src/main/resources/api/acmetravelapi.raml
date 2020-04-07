@@ -1,0 +1,125 @@
+#%RAML 1.0
+title: AcmeTravelAPI
+baseUri: https://anypoint.mulesoft.com/mocking/api/v1/links/a786be53-45bd-49fc-b8c2-8c0141465d88/api/acme-travel/v1.0 # baseUri: http://localhost:8080/api/acme-travel/v1.0
+description: A RESTful API which returns realtime Flight information
+protocols:
+  - HTTP
+mediaType: 
+  - application/json
+
+types:
+  SeatUpdate: !include ./types/seat-update-datatype.raml
+  PriceUpdate: !include ./types/price-update-datatype.raml
+  NewFlight: !include ./types/new-flight-datatype.raml
+
+/flights:
+  get:
+    queryParameters:
+      date:
+        displayName: Date
+        type: date-only
+        description: An ISO 8601 Date format
+        example: 2020-04-05
+        required: true
+    responses:
+      200:
+        body:
+          application/json:
+            example: !include ./examples/get-flights-sample-response.json
+  post:
+    headers:
+      Content-Type: 
+       description: The Content-Type of Payload the API expects
+       displayName: Content type of the Payload
+       required: true
+       example:
+         value: application/json
+    body:
+      application/json:
+        type: NewFlight
+        example: |
+          {
+            "FlightCode": "BA001",
+            "AirlineName": "British Airways",
+            "DepartureAirport": "JFK",
+            "DestinationAirport": "LCY",
+            "AircraftType": "Airbus A318",
+            "SeatAvailability": 30,
+            "Price": 300,
+            "DepartureDate": "2020-03-15 20:30:00"
+          }
+    responses:
+      201:
+        body:
+          application/json:
+            example: !include ./examples/post-flights-sample-response.json
+  /{flightCode}/destinations:
+    get:
+      queryParameters:
+        limit:
+          displayName: Limit
+          description: The `limit` parameter restricts the number of entries returned
+          type: number
+          minimum: 1
+          default: 10
+          example: 10
+          required: true
+        offset:
+          displayName: Offset
+          description: The `offset` parameter specifies the first entry to return from a collection.
+          type: number
+          minimum: 0
+          default: 0
+          example: 10
+          required: false
+      responses:
+        200:
+          body:
+            application/json:
+              example: !include ./examples/get-flight-destinations-sample-response.json
+  /{flightCode}/seats:
+    patch:
+      description: Changes the seat availability for a Flight based on Flight Code
+      headers:
+        Content-Type: 
+         description: The Content-Type of Payload the API expects
+         displayName: Content type of the Payload
+         required: true
+         example:
+           value: application/json
+      body:
+        application/json:
+          type: SeatUpdate
+          example: |
+            {
+              "TotalNumberOfTickets": 3,
+              "TicketNature": "Add"
+            }
+      responses:
+        200:
+          body:
+            application/json:
+              example: { "Successfully updated"}
+  /{flightCode}/prices:
+    patch:
+      description: Changes the Ticket price for a Flight based on Flight Code
+      headers:
+        Content-Type: 
+         description: The Content-Type of Payload the API expects
+         displayName: Content type of the Payload
+         required: true
+         example:
+           value: application/json
+      body:
+        application/json:
+          type: PriceUpdate
+          example: |
+            {
+              "Price": 50,
+              "PriceNature": "Increase"
+            }
+      responses:
+        200:
+          body:
+            application/json:
+              example: { "Successfully updated"}

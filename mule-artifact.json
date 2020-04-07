@@ -1,0 +1,6 @@
+{
+  "minMuleVersion": "4.2.2-hf1",
+  "secureProperties": ["credentials.username","credentials.password"],
+  "name": "acmetravel",
+  "configs":["acmetravelapi.xml"]
+}
